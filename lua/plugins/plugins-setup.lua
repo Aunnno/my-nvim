@@ -1,45 +1,121 @@
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
   vim.fn.system({
     "git",
     "clone",
     "--filter=blob:none",
     "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable", -- latest stable release
+    "--branch=stable",
     lazypath,
   })
 end
 vim.opt.rtp:prepend(lazypath)
 
-
 local plugins = {
-   {
-	"folke/tokyonight.nvim",
-    lazy = false, -- 确保插件立即加载
-    priority = 1000, -- 设置高优先级，确保在其他插件之前加载
-    config = function()
-        vim.cmd([[colorscheme tokyonight-moon]])
-    end,
-   },
-	"nvim-lualine/lualine.nvim",  -- 状态栏
-	"nvim-treesitter/nvim-treesitter", -- 语法高亮
-	"nvim-tree/nvim-tree.lua",  -- 文档树
-	"nvim-tree/nvim-web-devicons", -- 文档树图标
-	"akinsho/bufferline.nvim", -- buffer分割线
-	"lewis6991/gitsigns.nvim", -- 左则git提示
-	"p00f/nvim-ts-rainbow", -- 配合treesitter，不同括号颜色区分
-	"numToStr/Comment.nvim", -- gcc和gc注释
-	"christoomey/vim-tmux-navigator", -- 用ctl-hjkl来定位窗口
-	"windwp/nvim-autopairs", -- 自动补全括号
-	"Pocco81/auto-save.nvim",
-	{
-    "lukas-reineke/indent-blankline.nvim",
-    main = "ibl",
-    ---@module "ibl"
-    ---@type ibl.config
-    opts = {},
-	}
-}
-local opts = {} -- 注意要定义这个变量
+  { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
 
-require("lazy").setup(plugins, opts)
+  {
+    "mason-org/mason.nvim",
+    opts = {
+      ui = {
+        icons = {
+          package_installed = "✓",
+          package_pending = "➜",
+          package_uninstalled = "✗",
+        },
+      },
+    },
+  },
+
+  {
+    "saghen/blink.cmp",
+    version = "1.*",
+    build = "cargo build --release",
+    dependencies = { "rafamadriz/friendly-snippets" },
+    opts_extend = { "sources.default" },
+    ---@type blink.cmp.Config
+    opts = {
+      keymap = { preset = "super-tab" },
+      appearance = { nerd_font_variant = "mono" },
+      completion = { documentation = { auto_show = false } },
+      sources = {
+        default = { "lsp", "path", "snippets", "buffer" },
+      },
+    },
+  },
+
+  { "nvim-treesitter/nvim-treesitter", lazy = false, build = ":TSUpdate" },
+
+  { "nvim-tree/nvim-web-devicons" },
+
+  {
+    "folke/snacks.nvim",
+    priority = 1000,
+    lazy = false,
+    ---@type snacks.Config
+    opts = {
+      bigfile = { enabled = true },
+      dashboard = { enabled = true },
+      explorer = { enabled = true },
+      indent = { enabled = true },
+      input = { enabled = true },
+      picker = {
+        enabled = true,
+        sources = {
+          explorer = {
+            layout = {
+              layout = { width = 0.2 },
+            },
+          },
+        },
+      },
+      notifier = { enabled = true, timeout = 3000 },
+      quickfile = { enabled = true },
+      scope = { enabled = true },
+      scroll = { enabled = true },
+      statuscolumn = { enabled = true },
+      words = { enabled = true },
+      terminal = {
+        win = {
+          height = 0.25,
+        },
+      },
+    },
+  },
+
+  {
+    "folke/noice.nvim",
+    event = "VeryLazy",
+    dependencies = {
+      "MunifTanjim/nui.nvim",
+      "rcarriga/nvim-notify",
+    },
+  },
+
+  "nvim-lualine/lualine.nvim",
+  "numToStr/Comment.nvim",
+  "windwp/nvim-autopairs",
+  "akinsho/bufferline.nvim",
+  { "lewis6991/gitsigns.nvim" },
+
+  {
+    "linux-cultist/venv-selector.nvim",
+    dependencies = {
+      { "nvim-lua/plenary.nvim" },
+    },
+    ft = "python",
+    keys = { { ",v", "<cmd>VenvSelect<cr>", desc = "Select Python venv" } },
+    opts = {
+      options = {
+        notify = true,
+        fd_binary_name = vim.fn.expand("~/.local/bin/fd"),
+      },
+    },
+  },
+}
+
+require("lazy").setup(plugins, {
+  git = {
+    timeout = 300,
+  },
+})
